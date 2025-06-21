@@ -64,20 +64,20 @@ def printScreen(screen: curses.initscr):
     screen.addstr(19, 0, "$                     $              ")
     screen.addstr(20, 0, "$                     $              ")
     screen.addstr(21, 0, "$ $ $ $ $ $ $ $ $ $ $ $              ")
-    
+    screen.refresh()
 
 
 def updateScreen(screen: curses.initscr) -> None:
     while True:
-        drawTetromino(screen, 16, 26, HOLD)
         for nextIndex in range(len(NEXT)): drawTetromino(screen, 5 + 3 * nextIndex, 26, NEXT[nextIndex])
+        drawTetromino(screen, 16, 26, HOLD)
         # 테트리스 필드 그리기
         for row in range(20):
             for pixel in range(10):
-                if FIELD[row][pixel] == 0: screen.addstr(6 + row, 26 + pixel, "  ")
-                else                     : screen.addstr(6 + row, 26 + pixel, "# ")
+                if FIELD[row][pixel] == 0: screen.addstr(1 + row, 1 + pixel, "  ")
+                else                     : screen.addstr(1 + row, 1 + pixel, "# ")
         screen.refresh()
-        time.sleep(0.1)
+        time.sleep(1)
 
 
 def main(screen: curses.initscr) -> None:
