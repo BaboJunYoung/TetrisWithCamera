@@ -77,6 +77,7 @@ def __printScreen(screen: curses.initscr):
 
 
 def __updateScreen(screen: curses.initscr) -> None:
+    global BLOCK
     while True:
         screen.addstr(4, 26, f"{SCORE:09}")
         for nextIndex in range(len(NEXT)): __drawTetromino(screen, 8 + 3 * nextIndex, 26, NEXT[nextIndex])
@@ -93,16 +94,13 @@ def __updateScreen(screen: curses.initscr) -> None:
         blockPosition[0] += 4 # 값 보정
         blockPosition[1] *= 2 # 값 보정
         blockPosition[1] += 2 # 값 보정
-        # screen.addstr(0, 0, str(blockPosition))
-        
-        # screen.addstr(0, 0, str(blockPosition))
-
         blockShape = BLOCK.getShape()
         # screen.addstr(0, 0, str(blockShape))
         for i in range(len(blockShape)):
             for ii in range(len(blockShape)):
                 if blockShape[i][ii] == "#":
-                    screen.addstr(blockPosition[0] + i, blockPosition[1] + ii * 2, "# ")
+                    screen.addstr(blockPosition[0] + i, blockPosition[1] + ii * 2, "0 ")
+
 
 
         screen.refresh()
@@ -135,10 +133,10 @@ def __main(screen: curses.initscr) -> None:
             case "j": BLOCK.rotateLeft()
             case "l": BLOCK.rotateRight()
         
-        screen.addstr(0, 0, str(BLOCK.getIsPlaced()))
         if (BLOCK.getIsPlaced()):
-            BLOCK = Tetromino(NEXT.pop(), FIELD)
+            BLOCK = Tetromino(NEXT.pop(0), FIELD)
             NEXT.append(random.choice(MINOS))
+        screen.addstr(0, 0, str(BLOCK.getPosition()))
         
         # screen.refresh()
 

@@ -1,7 +1,7 @@
 class Tetromino():
     # shape: 미노의 모양(IJOZTSL)
     # position: 콘솔에서 블록의 왼쪽위 좌표 리스트(x, y 순)
-    def __init__(self, shapeType: str, field: list, position: list = [-3, 3]):
+    def __init__(self, shapeType: str, field: list, position: list = None):
         self.TETROMINO = {
             "I": [
                 [" ", " ", " ", " "],
@@ -41,7 +41,8 @@ class Tetromino():
         }
         self.shapeType = shapeType
         self.shape = self.TETROMINO[self.shapeType]
-        self.position = position
+        if position == None: self.position = [-3, 3] # 파이썬 개미틴 기본값이 왜 모든 클래스에게 할당돼;;;;;;;;;;
+        else: self.position = position
         self.rotatedDegree = 0 # 시계방향으로 돌아간 정도
         self.field = field
         self.isPlaced = False
@@ -106,10 +107,17 @@ class Tetromino():
         for i in range(len(self.shape)):
             for ii in range(len(self.shape)):
                 if (self.shape[i][ii] == " "): continue
-                if (standardPosition[0] + i >= 20): return True
-                elif (standardPosition[1] + ii < 0 or standardPosition[1] + ii >= 10): return True
-                if (standardPosition[0] + i >= 0): 
-                    if (self.field[standardPosition[0] + i][standardPosition[1] + ii] == 1): return True
+                
+                blockRow = standardPosition[0] + i
+                blockColumn = standardPosition[1] + ii
+
+                # 필드 내부에 위치하는지 확인
+                if (blockRow >= 20): return True
+                elif (blockColumn < 0 or blockColumn >= 10): return True
+                
+                # 필드 블록과 겹치는지 확인
+                if (blockRow >= 0): 
+                    if (self.field[blockRow][blockColumn] == 1): return True
         return False
 
     def setBlock(self):
