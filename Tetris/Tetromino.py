@@ -1,7 +1,7 @@
 class Tetromino():
     # shape: 미노의 모양(IJOZTSL)
     # position: 콘솔에서 블록의 왼쪽위 좌표 리스트(x, y 순)
-    def __init__(self, shapeType: str, position: list):
+    def __init__(self, shapeType: str, position: list = [-3, 3]):
         self.TETROMINO = {
             "I": [
                 [" ", " ", " ", " "],
@@ -67,14 +67,42 @@ class Tetromino():
             for char in row:
                 print(char, end="")
             print()
-        
-    def testRun(self):
-        pass
-        # print(self.shape)
-        # self.__printShape()
-        # self.__rorateRight()
-        # print(self.shape)
-        # self.__printShape()
 
     def getShapeType(self) -> str: return self.shapeType
     def getShape(self) -> list: return self.shape
+
+    def getPosition(self) -> list: return list(self.position) # 얕은 복사 방지
+
+    def moveRight(self) -> bool:
+        self.position[1] += 1
+        if (self.isOut()):
+            self.position[1] -= 1
+            return False
+        return True
+
+    def moveLeft(self) -> bool:
+        self.position[1] -= 1
+        if (self.isOut()):
+            self.position[1] += 1
+            return False
+        return True
+
+    def isOut(self) -> bool:
+        standardPosition = self.getPosition()
+        for i in range(len(self.shape)):
+            for ii in range(len(self.shape)):
+                if (self.shape[i][ii] == " "): continue
+                if (standardPosition[0] + i >= 20): return True
+                elif (standardPosition[1] + ii < 0 or standardPosition[1] + ii >= 10): return True
+        return False
+
+    # 성공: True, 멈춤: False
+    def softDrop(self) -> bool: 
+        self.position[0] += 1
+        if self.isOut(): 
+            self.position[0] -= 1
+            return False
+        return True
+    
+    def hardDrop(self) -> None:
+        while (self.softDrop()):pass
