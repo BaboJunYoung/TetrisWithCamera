@@ -1,3 +1,5 @@
 virtual/
 .vscode/
 test.py/
+"dist/run.exe" 
+"build/run/run.pkg" 
