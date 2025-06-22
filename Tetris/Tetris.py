@@ -13,7 +13,7 @@ MINOS = ["I", "J", "O", "Z", "T", "S", "L"]
 HOLD = ""
 SCORE = 0
 NEXT = []
-BLOCK = Tetromino("J")
+BLOCK = Tetromino("J", FIELD)
 
 def hardDrop():
     pass
@@ -93,11 +93,12 @@ def __updateScreen(screen: curses.initscr) -> None:
         blockPosition[0] += 4 # 값 보정
         blockPosition[1] *= 2 # 값 보정
         blockPosition[1] += 2 # 값 보정
-        screen.addstr(0, 0, str(blockPosition))
+        # screen.addstr(0, 0, str(blockPosition))
         
         # screen.addstr(0, 0, str(blockPosition))
 
         blockShape = BLOCK.getShape()
+        # screen.addstr(0, 0, str(blockShape))
         for i in range(len(blockShape)):
             for ii in range(len(blockShape)):
                 if blockShape[i][ii] == "#":
@@ -111,10 +112,11 @@ def __updateScreen(screen: curses.initscr) -> None:
 
 def __main(screen: curses.initscr) -> None:
     screen.clear()
+    curses.curs_set(0)
     __printScreen(screen)
 
     # Next 3개 지정
-    global NEXT
+    global NEXT, BLOCK
     for _ in range(3): NEXT.append(random.choice(MINOS))
 
     screenThread = threading.Thread(target=__updateScreen, args=(screen, ))
@@ -126,11 +128,18 @@ def __main(screen: curses.initscr) -> None:
         pressedKey = str(screen.getkey())
         
         match(pressedKey):
-            case "KEY_LEFT": BLOCK.moveLeft()
-            case "KEY_RIGHT": BLOCK.moveRight()
-            case "KEY_DOWN": BLOCK.softDrop()
             case "a": BLOCK.moveLeft()
             case "d": BLOCK.moveRight()
+            case "s": BLOCK.softDrop()
+            case "w": BLOCK.hardDrop()
+            case "j": BLOCK.rotateLeft()
+            case "l": BLOCK.rotateRight()
+        
+        screen.addstr(0, 0, str(BLOCK.getIsPlaced()))
+        if (BLOCK.getIsPlaced()):
+            BLOCK = Tetromino(NEXT.pop(), FIELD)
+            NEXT.append(random.choice(MINOS))
+        
         # screen.refresh()
 
 """
