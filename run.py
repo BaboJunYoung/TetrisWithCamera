@@ -23,5 +23,3 @@ def control(event):
 
 # 훅 등록
 key.hook(control)
-
-# 프로그램 종료 방지 (Ctrl+C 등으로 종료 가능)
