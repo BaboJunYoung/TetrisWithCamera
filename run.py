@@ -1,17 +1,17 @@
-import Tetris.Tetris as Tetris
+import Tetris.TetrisGame as TetrisGame
 import keyboard as key
 
-Tetris.run()
+TetrisGame.run()
 
 # 키 이름 → 함수 매핑
 key_actions = {
-    "w": Tetris.hardDrop,
-    "a": Tetris.moveLeft,
-    "s": Tetris.softDrop,
-    "d": Tetris.moveRight,
-    "j": Tetris.rotateLeft,
-    "l": Tetris.rotateRight,
-    "i": Tetris.hold,
+    "w": TetrisGame.hardDrop,
+    "a": TetrisGame.moveLeft,
+    "s": TetrisGame.softDrop,
+    "d": TetrisGame.moveRight,
+    "j": TetrisGame.rotateLeft,
+    "l": TetrisGame.rotateRight,
+    "i": TetrisGame.hold,
 }
 
 def control(event):
