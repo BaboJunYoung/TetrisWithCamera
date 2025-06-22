@@ -65,22 +65,17 @@ class Tetromino():
 
     def rotateRight(self) -> bool: 
         self.shape = self.__rotateListRight(self.shape)
-        if (self.isOut()): 
+        if (self.__isOut()): 
             self.shape = self.__rotateListLeft(self.shape)
             return False
         return True
     def rotateLeft(self) -> bool : 
         self.shape = self.__rotateListLeft(self.shape)
-        if (self.isOut()):
+        if (self.__isOut()):
             self.shape = self.__rotateListRight(self.shape)
             return False
         return True
 
-    def __printShape(self) -> None:
-        for row in self.shape:
-            for char in row:
-                print(char, end="")
-            print()
 
     def getShapeType(self) -> str: return str(self.shapeType)
     def getShape(self) -> list: return self.shape
@@ -90,19 +85,19 @@ class Tetromino():
 
     def moveRight(self) -> bool:
         self.position[1] += 1
-        if (self.isOut()):
+        if (self.__isOut()):
             self.position[1] -= 1
             return False
         return True
 
     def moveLeft(self) -> bool:
         self.position[1] -= 1
-        if (self.isOut()):
+        if (self.__isOut()):
             self.position[1] += 1
             return False
         return True
 
-    def isOut(self) -> bool:
+    def __isOut(self) -> bool:
         standardPosition = self.getPosition()
         for i in range(len(self.shape)):
             for ii in range(len(self.shape)):
@@ -134,11 +129,29 @@ class Tetromino():
     # 성공: True, 멈춤: False
     def softDrop(self) -> bool: 
         self.position[0] += 1
-        if self.isOut(): 
+        if self.__isOut(): 
             self.position[0] -= 1
             return False
         return True
     
-    def hardDrop(self) -> None:
-        while (self.softDrop()):pass
+    def hardDrop(self) -> int:
+        droppedCount = 0
+        while (self.softDrop()):
+            droppedCount += 1
+            pass
         self.setBlock()
+        return droppedCount
+
+    # 직접 떨궈보고 원래 위치로 돌아가는 방식으로 구현
+    def getHardDropPosition(self) -> list:
+        originalPosition = self.getPosition()
+        while (self.softDrop()): pass
+        hardDropPosition = self.getPosition()
+        self.position = originalPosition
+        return hardDropPosition
+    
+    # 한 칸 내려보고 안내려가지면 바닥 닿은거지
+    def isGround(self) -> bool:
+        if (not self.softDrop()): return True
+        else: self.position[0] -= 1
+        return False
