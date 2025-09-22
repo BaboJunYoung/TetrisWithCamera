@@ -8,7 +8,7 @@ def handleUpdate():
     if game.updateTetris() == False:
         # 게임 재시작
         print("IN")
-        game = TetrisGame(2)
+        game = TetrisGame(5)
         game.updateTetris()
         handleListener()
     game.screen.ontimer(handleUpdate, 1)

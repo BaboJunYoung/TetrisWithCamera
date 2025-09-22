@@ -7,7 +7,7 @@ class TetrisGame():
         self.MINO_TYPES = list("ZSOTJLI")
 
         self.FALLING_TIME = 1000 / fallingTimeScale
-        self.SETTING_TIME = 3
+        self.SETTING_TIME = 2
 
 
         self.nextMinos: list[Tetromino] = []
@@ -35,6 +35,7 @@ class TetrisGame():
         self.turtle.speed(0)
         self.turtle.penup()
 
+        self.isHolded = False
         self.isRun = True
         self.tick = 0
         self.settingBlockTimer = 0
@@ -64,11 +65,8 @@ class TetrisGame():
 
             if fallingResult == False: # 블럭 자동설치
                 self.settingBlockTimer += 1
-                if self.settingBlockTimer >= self.SETTING_TIME:
-                    self.field = self.fallingMino.getFallingMinoField()
-                    self.__setFallingMino()
-                    self.__drawNext()
-                    self.settingBlockTimer = 0
+                if self.settingBlockTimer >= self.SETTING_TIME: self.__setMinoBlock()
+
         self.__removeLine()
         self.__drawField()
         self.screen.update()
@@ -97,10 +95,10 @@ class TetrisGame():
         return self.fallingMino.softDrop()
     def hardDrop(self) -> None:
         self.fallingMino.hardDrop()
-        self.field = self.fallingMino.getFallingMinoField()
-        self.__setFallingMino()
-        self.__drawNext()
+        self.__setMinoBlock()
     def hold(self) -> None:
+        if self.isHolded: return -1
+
         if self.holdingMino == None: # 홀드에 암것도 업슴
             self.holdingMino = self.fallingMino
             self.__setFallingMino()
@@ -109,11 +107,19 @@ class TetrisGame():
             holdingMino = self.holdingMino
             self.holdingMino = self.fallingMino
             self.fallingMino = Tetromino(holdingMino.getType(), self.field)
+        self.isHolded = True
         self.__drawHold()
 
 
 #################################################################
     # System Function
+
+    def __setMinoBlock(self):
+        self.field = self.fallingMino.getFallingMinoField()
+        self.__setFallingMino()
+        self.__drawNext()
+        self.settingBlockTimer = 0
+        self.isHolded = False
 
     def __moveForward(self, distance: int = 1):
         self.turtle.forward(self.BLOCK_SIZE * distance)
