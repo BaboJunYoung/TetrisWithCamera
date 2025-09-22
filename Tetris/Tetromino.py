@@ -1,12 +1,12 @@
 import copy
 
 class Tetromino():
-    def __init__(self, type: str, field: list[list[int|str]], position: list[int] = None):
-        if type not in "ZSOTJLI-": raise Exception(f"{type} is not tetromino name.")
+    def __init__(self, type: str, field: list[list[int|str]] = None, position: list[int] = None):
+        if type not in "ZSOTJLI": raise Exception(f"{type} is not tetromino name.")
         self.type = type
         self.position = position if position != None else [-2, 12] if type == "O" else [-2, 11]
         self.shape = self.__getShape()
-        self.field = field
+        self.field = [] if field == None else field 
         self.length = len(self.shape)
 
         self.minoTypes = list("ZSOTJLI")
@@ -112,7 +112,7 @@ class Tetromino():
             return False
         else: return True
 
-    def gravityDrop(self) -> bool:
+    def softDrop(self) -> bool:
         self.position[1] -= 1
         if self.isCrash(): 
             self.position[1] += 1

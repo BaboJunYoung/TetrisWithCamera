@@ -1,296 +1,288 @@
-# 기한: 9월 26일 전까지
+from Tetromino import Tetromino
+import turtle, random, copy
 
-import Tetromino
-import turtle
-import random
-import time
+class TetrisGame():
+    def __init__(self, fallingTimeScale: float = 1) -> None:
+        self.BLOCK_SIZE = 50
+        self.FALLING_TIME = 100 / fallingTimeScale
+        self.SETTING_TIME = 2
+        self.MINO_TYPES = list("ZSOTJLI")
 
+        self.nextMinos: list[Tetromino] = []
+        self.bagOfNext: list[Tetromino] = []
+        self.holdingMino: Tetromino = None
+        self.fallingMino: Tetromino = None
 
-__BLOCK_SIZE = 50
-__HOLD = Tetromino.Tetromino("-", [])
-__FALLING = Tetromino.Tetromino("-", [])
-__NEXT = []
-__BAG = []
-__MINOS = list("ZSOTJLI")
-__FIELD = [
-    [0 for _ in range(10)] for _ in range(20)
-]
-__BEFORE_FIELD = __FIELD
-# TIME = cs : 1/100 초
-__FALLING_TIME = 100 / 1
-__isRun = True
+        self.field: list[list[int | str]] = [
+            [0 for _ in range(10)] for _ in range(20)
+        ] # 빈칸: 0 / 블록: hex코드 색상
 
-screen = turtle.Screen()
-screen.title("Tetris with camera")
-screen.setup(width=__BLOCK_SIZE*27, height=__BLOCK_SIZE*23)
-screen.tracer(0) # 이걸로 속도조절
-t = turtle.Turtle(shape="turtle")
-t.speed(0) # 이걸로 속도조절
-t.penup()
+        self.previousFallingMinoField: list[list[int | str]] = [
+            [0 for _ in range(10)] for _ in range(20)
+        ]
 
-__tick = 0
-__setBlockCounter = 0
+        self.screen = turtle.Screen()
+        self.screen.title("Tetris with Camera")
+        self.screen.setup(
+            width=self.BLOCK_SIZE * 27,
+            height=self.BLOCK_SIZE * 23
+        )
+        self.screen.tracer(0)
+        self.turtle = turtle.Turtle(shape="turtle")
+        self.turtle.speed(0)
+        self.turtle.penup()
 
-def run():
-    global __FIELD
+        self.isRun = True
+        self.tick = 0
+        self.settingBlockTimer = 0
+        #################################################
+        self.fillNext()
+        self.setFallingMino()
+        self.drawMap()
+        self.drawNext()
 
-    __drawMap()    
-    __addNext()
-    __setFallingMino()
-    __drawNext()
-    screen.update()
-
-def update():
-    if not(__isRun): return
-
-
-    global __tick, __FIELD, __setBlockCounter
-
-    __tick += 1
-    # print(__tick)
-    if __tick % __FALLING_TIME == 0:
-        result = __FALLING.gravityDrop()
-
-        # printList(FALLING.getFallingMinoField())
-        if result == False: # 내리기 실패 -> 바닥 닿음
-            __setBlockCounter += 1
-            if __setBlockCounter == 2:
-                __FIELD = __FALLING.getFallingMinoField()
-                __setFallingMino()
-                __drawNext()
-                __setBlockCounter = 0
+        self.screen.update()
     
-    __removeLine()
-    __drawField()
-    screen.update()
+    # Run Tetris
+    def run(self, time: int = 10):
+        self.updateTetris()
+        self.screen.ontimer(self.run, time)
 
-def __endGame():
-    global __isRun, __FALLING, __HOLD, __NEXT, __BAG, __FIELD, __BEFORE_FIELD
+    # Update Screen and Game Status
+    ## True: tetris is running
+    ## False: tetris is not running
+    def updateTetris(self) -> bool:
+        if self.isRun != True: return False
 
-    __FALLING = None
-    __isRun = False
+        self.tick += 1
 
-# CONTROL FUNCTION
-def moveLeft(): __FALLING.moveLeft()
-def moveRight(): __FALLING.moveRight()
-def turnLeft(): __FALLING.turnLeft()
-def turnRight(): __FALLING.turnRight()
-def turn180(): __FALLING.turn180()
-def hardDrop():
-    global __FIELD
+        if self.tick % self.FALLING_TIME == 0:
+            fallingResult = self.fallingMino.softDrop()
 
-    __FALLING.hardDrop()
-    __FIELD = __FALLING.getFallingMinoField()
-    __setFallingMino()
-    __drawNext()
-def softDrop(): __FALLING.gravityDrop()
-def hold():
-    global __FALLING, __HOLD
-    # 홀드에 암것도 업슴
-    if __HOLD.getType() == "-":
-        __HOLD = __FALLING
-        __setFallingMino()
-    # 홀드에 먼가가 잇슴
-    else:
-        temp = __HOLD
-        __HOLD = __FALLING
-        __FALLING = Tetromino.Tetromino(temp.getType(), __FIELD)
-    __drawHold()
+            if fallingResult == False:
+                self.settingBlockTimer += 1
+                if self.settingBlockTimer == self.SETTING_TIME:
+                    self.field = self.fallingMino.getFallingMinoField()
+                    self.setFallingMino()
+                    self.drawNext()
+                    self.settingBlockTimer = 0
+        self.removeLine()
+        self.drawField()
+        self.screen.update()
+        return True
+
+###################################################################
+    # Control Functions
+    
+    # True: Succeed moving
+    # False: Fail moving
+    def moveLeft(self) -> bool:
+        return self.fallingMino.moveLeft()
+    def moveRight(self) -> bool:
+        return self.fallingMino.moveRight()
+    
+    # True: Succeed drop
+    # False: Fail drop
+    def softDrop(self) -> bool:
+        return self.fallingMino.softDrop()
+    def hardDrop(self) -> None:
+        self.fallingMino.hardDrop()
+        self.field = self.fallingMino.getFallingMinoField()
+        self.setFallingMino()
+        self.drawNext()
+    def hold(self) -> None:
+        if self.holdingMino == None: # 홀드에 암것도 업슴
+            self.holdingMino = self.fallingMino
+            self.setFallingMino()
+        else: # 홀드에 먼가 잇슴
+            holdingMino = self.holdingMino
+            self.holdingMino = self.fallingMino
+            self.fallingMino = Tetromino(holdingMino.getType(), self.field)
+        self.drawHold()
 
 
+#################################################################
+    # System Function
 
-# System Functions
-def __printList(lst: list):
-    for a in lst: print(a)
-    print("-------------")
+    def moveForward(self, distance: int = 1):
+        self.turtle.forward(self.BLOCK_SIZE * distance)
+    def moveBackward(self, distance: int = 1):
+        self.turtle.back(self.BLOCK_SIZE * distance)
 
-def __removeLine():
-    global __FIELD
-    # __printList(__FIELD)
-    for column in range(20):
-        isFilled = True
-        for row in range(10):
-            if __FIELD[column][row] == 0:
-                isFilled = False
-                break
-        if isFilled:
-            del __FIELD[column]
-            __FIELD.insert(0, [0 for _ in range(10)])
-        # print(isFilled)
+    def turnRight(self, angle: int = 90):
+        self.turtle.right(angle)
+    def turnLeft(self, angle: int = 90):
+        self.turtle.left(angle)
 
-def __setFallingMino():
-    global __FALLING
+    def moveTurtleTo(self, posX: int, posY: int) -> None:
+        self.turtle.goto(self.BLOCK_SIZE * posX, self.BLOCK_SIZE * posY)
 
-    __FALLING = Tetromino.Tetromino(__NEXT.pop(0).getType(), __FIELD)
-    if __FALLING.isCrash(): # 소환 실패 -> 게임 끝!
+    def printList(self, list: list) -> None:
+        for item in list: print(item)
+        print("----------------------------")
+    
+    # 꽉 찬 줄 지우기
+    def removeLine(self):
+        for column in range(20):
+            isFilled = True
+            for row in range(10):
+                if self.field[column][row] == 0:
+                    isFilled = False
+                    break
+            if isFilled:
+                del self.field[column] # 꽉 찬 줄 제거
+                self.field.insert(0, [0 for _ in range(10)]) # 맨 위에 새로운 줄 추가
+    
+    def setFallingMino(self):
+        self.fallingMino = Tetromino(self.nextMinos.pop(0).getType(), self.field)
+        self.fillNext()
+
+        if self.fallingMino.isCrash(): # 소환했는데 충돌이 남. -> 위까지 넘침
+            self.endGame()
+    
+    def fillBag(self):
+        for minoType in self.MINO_TYPES:
+            mino = Tetromino(minoType)
+            self.bagOfNext.append(mino)
+        random.shuffle(self.bagOfNext)
+    
+    def fillNext(self):
+        for _ in range(5 - len(self.nextMinos)):
+            if len(self.bagOfNext) == 0: self.fillBag()
+            self.nextMinos.append(self.bagOfNext.pop())
+    
+
+#################################################################
+    # Drawing Functions
+
+    def hide(self):
+        self.moveTurtleTo(0, 12)
+        self.turtle.color("#ffffff")
+    
+    def drawHold(self):
+        self.moveTurtleTo(-12, 10)
+        self.drawBox(6, 4)
+        self.moveTurtleTo(-11, 9)
+        self.drawMino(self.holdingMino)
+
+    def drawField(self):
+        if self.fallingMino == None: return False
+
+        fallingMinoField = self.fallingMino.getFallingMinoField()
+
+        for column in range(20):
+            for row in range(10):
+                fallingFieldColor = fallingMinoField[column][row]
+                previousFieldColor = self.previousFallingMinoField[column][row]
+
+                if fallingFieldColor != previousFieldColor:
+                    self.moveTurtleTo(row - 5, 10 - column)
+                    self.drawBlock(fallingFieldColor)
+        self.previousFallingMinoField = fallingMinoField
+        self.hide()
+    
+    def drawNext(self):
+        self.moveTurtleTo(6, 10)
+        self.drawBox(6, 16)
+
+        for nextMinoIndex in range(len(self.nextMinos)):
+            self.moveTurtleTo(7, 9 - 3*nextMinoIndex)
+            self.drawMino(self.nextMinos[nextMinoIndex])
+
+    def drawMino(self, mino: Tetromino):
+        minoType = mino.getType()
+        color = mino.getColorOfMino()
         
-        # print(f"FALLING POSITION : {FALLING.getPosition()}")
-        # print(f"FALLING FIELD :")
-        # printList(FALLING.getFallingMinoField())
-
-        __endGame()
-    __addNext()
-
-def __shuffleBag():
-    for minoType in __MINOS:
-        mino = Tetromino.Tetromino(minoType, __FIELD)
-        __BAG.append(mino)
-    random.shuffle(__BAG)
-
-def __addNext():
-    for _ in range(5 - len(__NEXT)):
-        if len(__BAG) == 0: __shuffleBag()
-        __NEXT.append(__BAG.pop())
-
-
-
-# DRAWING FUNCTIONS
-def __hide():
-    t.goto(0, 12 * __BLOCK_SIZE)
-    t.color("#ffffff")
-
-def __drawHold():
-    t.goto(__BLOCK_SIZE * -12, __BLOCK_SIZE * 10)
-    __drawBox(6, 4)
-    t.goto(__BLOCK_SIZE * -11, __BLOCK_SIZE * 9)
-    __drawMino(__HOLD)
-
-def __drawField():
-    global __BEFORE_FIELD
-    if type(__FALLING) == type(None): return -1 # Game Over
-
-    field = __FALLING.getFallingMinoField()
-    for columnIndex in range(20):
-        for rowIndex in range(10):
-            color = field[columnIndex][rowIndex]
-            beforeColor = __BEFORE_FIELD[columnIndex][rowIndex]
-
-            if color == beforeColor: continue
-            elif color != beforeColor:
-                t.goto(__BLOCK_SIZE * (-5 + rowIndex), __BLOCK_SIZE * (10 - columnIndex))
-                if color == 0: __drawBlock()
-                else: __drawBlock(color)
-            else:
-                t.goto(__BLOCK_SIZE * (-5 + rowIndex), __BLOCK_SIZE * (10 - columnIndex))
-                __drawBlock(color)
-    __BEFORE_FIELD = field
-
-    __hide()
-
-def __drawNext():
-    t.goto(__BLOCK_SIZE * 6, __BLOCK_SIZE * 10)
-    __drawBox(6, 16, "#ffffff")
-
-    for nextMinoIndex in range(len(__NEXT)):
-        t.goto(__BLOCK_SIZE * 7, __BLOCK_SIZE * (9 - 3 * nextMinoIndex))
-        __drawMino(__NEXT[nextMinoIndex])
-
-
-def __drawMino(mino: Tetromino.Tetromino):
-    # ZSOTJLI
-    match(mino.getType()):
-        case "Z":
-            __drawBox(2, 1, mino.getColorOfMino())
-            t.forward(__BLOCK_SIZE)
-            t.right(90)
-            t.forward(__BLOCK_SIZE)
-            __drawBox(2, 1, mino.getColorOfMino())
-        case "S":
-            t.forward(__BLOCK_SIZE)
-            __drawBox(2, 1, mino.getColorOfMino())
-            t.back(__BLOCK_SIZE)
-            t.right(90)
-            t.forward(__BLOCK_SIZE)
-            __drawBox(2, 1, mino.getColorOfMino())
-        case "O":
-            t.forward(__BLOCK_SIZE)
-            __drawBox(2, 2, mino.getColorOfMino())
-        case "T":
-            t.forward(__BLOCK_SIZE)
-            __drawBlock(mino.getColorOfMino())
-            t.back(__BLOCK_SIZE)
-            t.right(90)
-            t.forward(__BLOCK_SIZE)
-            __drawBox(3, 1, mino.getColorOfMino())
-        case "J":
-            __drawBox(3, 2, mino.getColorOfMino())
-            t.forward(__BLOCK_SIZE)
-            __drawBox(2, 1)
-        case "L":
-            __drawBox(3, 2, mino.getColorOfMino())
-            __drawBox(2, 1)
-        case "I":
-            t.right(90)
-            t.forward(__BLOCK_SIZE)
-            __drawBox(4, 1, mino.getColorOfMino())
-
-def __drawMap():
-    # 큰 네모
-    t.goto(__BLOCK_SIZE * -13, __BLOCK_SIZE * 11)
-    __drawBox(26, 22, "#000000")
-
-    # 모서리 다듬기
-    ## 왼쪽 아래
-    t.goto(__BLOCK_SIZE * -13, __BLOCK_SIZE * 5)
-    __drawBox(7, 16, "#ffffff")
-
-    ## 오른쪽 아래
-    t.goto(__BLOCK_SIZE * 6, __BLOCK_SIZE * -7)
-    __drawBox(7, 4, "#ffffff")
-
-    # 작은 네모 (HOLD)
-    t.goto(__BLOCK_SIZE * -12, __BLOCK_SIZE * 10)
-    __drawBox(6, 4, "#ffffff")
-
-    # 작은 네모 (FIELD)
-    t.goto(__BLOCK_SIZE * -5, __BLOCK_SIZE * 10)
-    __drawBox(10, 20, "#ffffff")
-
-    # # 작은 네모 (NEXT)
-    # t.goto(BLOCK_SIZE * 6, BLOCK_SIZE * 10)
-    # __drawBox(6, 16, "#ffffff")
-
-    # # END
-    # __goAway()
-
-def __drawBox(width: int, height: int, color: str = "#ffffff"):
-    t.setheading(0)
-
-    t.color(color)
-    t.fillcolor(color)
-    t.pendown()
-    t.begin_fill()
-
-    t.forward(__BLOCK_SIZE * width)
-    t.right(90)
-    t.forward(__BLOCK_SIZE * height)
-    t.right(90)
-    t.forward(__BLOCK_SIZE * width)
-    t.right(90)
-    t.forward(__BLOCK_SIZE * height)
-    t.end_fill()
+        match (minoType):
+            case "Z":
+                self.drawBox(2, 1, color)
+                self.moveForward()
+                self.turnRight()
+                self.moveForward()
+                self.drawBox(2, 1, color)
+            case "S":
+                self.moveForward()
+                self.drawBox(2, 1, color)
+                self.moveBackward()
+                self.turnRight()
+                self.moveForward()
+                self.drawBox(2, 1, color)
+            case "O":
+                self.moveForward()
+                self.drawBox(2, 2, color)
+            case "T":
+                self.moveForward()
+                self.drawBlock(color)
+                self.moveBackward()
+                self.turnRight()
+                self.moveForward()
+                self.drawBox(3, 1, color)
+            case "J":
+                self.drawBox(3, 2, color)
+                self.moveForward()
+                self.drawBox(2, 1)
+            case "L":
+                self.drawBox(3, 2, color)
+                self.drawBox(2, 1)
+            case "I":
+                self.turnRight()
+                self.moveForward()
+                self.drawBox(4, 1, color)
     
-    t.setheading(0)
-    t.penup()
+    def drawMap(self):
+        # 전체 큰 네모
+        self.moveTurtleTo(-13, 11)
+        self.drawBox(26, 22, "#000000")
 
-def __drawBlock(color: str = "#ffffff"):
-    t.setheading(0)
-    t.color(color)
-    t.begin_fill()
-    t.fillcolor(color)
-    t.pendown()
-    ######################
-    t.forward(__BLOCK_SIZE)
-    t.right(90)
+
+        ## 모서리 다듬기
+        
+        # 왼쪽 아래
+        self.moveTurtleTo(-13, 5)
+        self.drawBox(7, 16)
+
+        # 오른쪽 아래
+        self.moveTurtleTo(6, -7)
+        self.drawBox(7, 4)
+
+        # 홀드
+        self.moveTurtleTo(-12, 10)
+        self.drawBox(6, 4)
+
+        # 필드
+        self.moveTurtleTo(-5, 10)
+        self.drawBox(10, 20)
+
+    def drawBox(self, width: int, height: int, color: str = "#ffffff"):
+        self.turtle.setheading(0)
+
+        self.turtle.color(color)
+        self.turtle.fillcolor(color)
+        self.turtle.pendown()
+        self.turtle.begin_fill()
+
+        for _ in range(2):
+            self.moveForward(width)
+            self.turnRight()
+            self.moveForward(height)
+            self.turnRight()
+        
+        self.turtle.end_fill()
+        self.turtle.penup()
     
-    t.forward(__BLOCK_SIZE - 1)
-    t.right(90)
-    
-    t.forward(__BLOCK_SIZE)
-    t.right(90)
-    
-    t.forward(__BLOCK_SIZE - 1)
-    t.right(90)
-    ######################
-    t.end_fill()
-    t.penup()
+    def drawBlock(self, color: str = "#ffffff"):
+        if color == 0: color = "#ffffff"
+
+        self.turtle.setheading(0)
+        self.turtle.color(color)
+        self.turtle.begin_fill()
+        self.turtle.fillcolor(color)
+        self.turtle.pendown()
+
+        for _ in range(2):
+            self.moveForward()
+            self.turnRight()         
+            self.turtle.forward(self.BLOCK_SIZE - 1)
+            self.turnRight()
+        self.turtle.end_fill()
+        self.turtle.penup()
