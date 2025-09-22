@@ -36,10 +36,10 @@ class TetrisGame():
         self.tick = 0
         self.settingBlockTimer = 0
         #################################################
-        self.fillNext()
-        self.setFallingMino()
-        self.drawMap()
-        self.drawNext()
+        self.__fillNext()
+        self.__setFallingMino()
+        self.__drawMap()
+        self.__drawNext()
 
         self.screen.update()
     
@@ -63,11 +63,11 @@ class TetrisGame():
                 self.settingBlockTimer += 1
                 if self.settingBlockTimer == self.SETTING_TIME:
                     self.field = self.fallingMino.getFallingMinoField()
-                    self.setFallingMino()
-                    self.drawNext()
+                    self.__setFallingMino()
+                    self.__drawNext()
                     self.settingBlockTimer = 0
-        self.removeLine()
-        self.drawField()
+        self.__removeLine()
+        self.__drawField()
         self.screen.update()
         return True
 
@@ -81,6 +81,13 @@ class TetrisGame():
     def moveRight(self) -> bool:
         return self.fallingMino.moveRight()
     
+    def turnLeft(self) -> bool:
+        return self.fallingMino.turnLeft()
+    def turnRight(self) -> bool:
+        return self.fallingMino.turnRight()
+    def turn180(self) -> bool:
+        return self.fallingMino.turn180()
+
     # True: Succeed drop
     # False: Fail drop
     def softDrop(self) -> bool:
@@ -88,41 +95,42 @@ class TetrisGame():
     def hardDrop(self) -> None:
         self.fallingMino.hardDrop()
         self.field = self.fallingMino.getFallingMinoField()
-        self.setFallingMino()
-        self.drawNext()
+        self.__setFallingMino()
+        self.__drawNext()
     def hold(self) -> None:
         if self.holdingMino == None: # 홀드에 암것도 업슴
             self.holdingMino = self.fallingMino
-            self.setFallingMino()
+            self.__setFallingMino()
+            self.__drawNext()
         else: # 홀드에 먼가 잇슴
             holdingMino = self.holdingMino
             self.holdingMino = self.fallingMino
             self.fallingMino = Tetromino(holdingMino.getType(), self.field)
-        self.drawHold()
+        self.__drawHold()
 
 
 #################################################################
     # System Function
 
-    def moveForward(self, distance: int = 1):
+    def __moveForward(self, distance: int = 1):
         self.turtle.forward(self.BLOCK_SIZE * distance)
-    def moveBackward(self, distance: int = 1):
+    def __moveBackward(self, distance: int = 1):
         self.turtle.back(self.BLOCK_SIZE * distance)
 
-    def turnRight(self, angle: int = 90):
+    def __turnRight(self, angle: int = 90):
         self.turtle.right(angle)
-    def turnLeft(self, angle: int = 90):
+    def __turnLeft(self, angle: int = 90):
         self.turtle.left(angle)
 
-    def moveTurtleTo(self, posX: int, posY: int) -> None:
+    def __moveTurtleTo(self, posX: int, posY: int) -> None:
         self.turtle.goto(self.BLOCK_SIZE * posX, self.BLOCK_SIZE * posY)
 
-    def printList(self, list: list) -> None:
+    def __printList(self, list: list) -> None:
         for item in list: print(item)
         print("----------------------------")
     
     # 꽉 찬 줄 지우기
-    def removeLine(self):
+    def __removeLine(self):
         for column in range(20):
             isFilled = True
             for row in range(10):
@@ -133,39 +141,39 @@ class TetrisGame():
                 del self.field[column] # 꽉 찬 줄 제거
                 self.field.insert(0, [0 for _ in range(10)]) # 맨 위에 새로운 줄 추가
     
-    def setFallingMino(self):
+    def __setFallingMino(self):
         self.fallingMino = Tetromino(self.nextMinos.pop(0).getType(), self.field)
-        self.fillNext()
+        self.__fillNext()
 
         if self.fallingMino.isCrash(): # 소환했는데 충돌이 남. -> 위까지 넘침
             self.endGame()
     
-    def fillBag(self):
+    def __fillBag(self):
         for minoType in self.MINO_TYPES:
             mino = Tetromino(minoType)
             self.bagOfNext.append(mino)
         random.shuffle(self.bagOfNext)
     
-    def fillNext(self):
+    def __fillNext(self):
         for _ in range(5 - len(self.nextMinos)):
-            if len(self.bagOfNext) == 0: self.fillBag()
+            if len(self.bagOfNext) == 0: self.__fillBag()
             self.nextMinos.append(self.bagOfNext.pop())
     
 
 #################################################################
     # Drawing Functions
 
-    def hide(self):
-        self.moveTurtleTo(0, 12)
+    def __hide(self):
+        self.__moveTurtleTo(0, 12)
         self.turtle.color("#ffffff")
     
-    def drawHold(self):
-        self.moveTurtleTo(-12, 10)
-        self.drawBox(6, 4)
-        self.moveTurtleTo(-11, 9)
-        self.drawMino(self.holdingMino)
+    def __drawHold(self):
+        self.__moveTurtleTo(-12, 10)
+        self.__drawBox(6, 4)
+        self.__moveTurtleTo(-11, 9)
+        self.__drawMino(self.holdingMino)
 
-    def drawField(self):
+    def __drawField(self):
         if self.fallingMino == None: return False
 
         fallingMinoField = self.fallingMino.getFallingMinoField()
@@ -176,84 +184,84 @@ class TetrisGame():
                 previousFieldColor = self.previousFallingMinoField[column][row]
 
                 if fallingFieldColor != previousFieldColor:
-                    self.moveTurtleTo(row - 5, 10 - column)
-                    self.drawBlock(fallingFieldColor)
+                    self.__moveTurtleTo(row - 5, 10 - column)
+                    self.__drawBlock(fallingFieldColor)
         self.previousFallingMinoField = fallingMinoField
-        self.hide()
+        self.__hide()
     
-    def drawNext(self):
-        self.moveTurtleTo(6, 10)
-        self.drawBox(6, 16)
+    def __drawNext(self):
+        self.__moveTurtleTo(6, 10)
+        self.__drawBox(6, 16)
 
         for nextMinoIndex in range(len(self.nextMinos)):
-            self.moveTurtleTo(7, 9 - 3*nextMinoIndex)
-            self.drawMino(self.nextMinos[nextMinoIndex])
+            self.__moveTurtleTo(7, 9 - 3*nextMinoIndex)
+            self.__drawMino(self.nextMinos[nextMinoIndex])
 
-    def drawMino(self, mino: Tetromino):
+    def __drawMino(self, mino: Tetromino):
         minoType = mino.getType()
         color = mino.getColorOfMino()
         
         match (minoType):
             case "Z":
-                self.drawBox(2, 1, color)
-                self.moveForward()
-                self.turnRight()
-                self.moveForward()
-                self.drawBox(2, 1, color)
+                self.__drawBox(2, 1, color)
+                self.__moveForward()
+                self.__turnRight()
+                self.__moveForward()
+                self.__drawBox(2, 1, color)
             case "S":
-                self.moveForward()
-                self.drawBox(2, 1, color)
-                self.moveBackward()
-                self.turnRight()
-                self.moveForward()
-                self.drawBox(2, 1, color)
+                self.__moveForward()
+                self.__drawBox(2, 1, color)
+                self.__moveBackward()
+                self.__turnRight()
+                self.__moveForward()
+                self.__drawBox(2, 1, color)
             case "O":
-                self.moveForward()
-                self.drawBox(2, 2, color)
+                self.__moveForward()
+                self.__drawBox(2, 2, color)
             case "T":
-                self.moveForward()
-                self.drawBlock(color)
-                self.moveBackward()
-                self.turnRight()
-                self.moveForward()
-                self.drawBox(3, 1, color)
+                self.__moveForward()
+                self.__drawBlock(color)
+                self.__moveBackward()
+                self.__turnRight()
+                self.__moveForward()
+                self.__drawBox(3, 1, color)
             case "J":
-                self.drawBox(3, 2, color)
-                self.moveForward()
-                self.drawBox(2, 1)
+                self.__drawBox(3, 2, color)
+                self.__moveForward()
+                self.__drawBox(2, 1)
             case "L":
-                self.drawBox(3, 2, color)
-                self.drawBox(2, 1)
+                self.__drawBox(3, 2, color)
+                self.__drawBox(2, 1)
             case "I":
-                self.turnRight()
-                self.moveForward()
-                self.drawBox(4, 1, color)
+                self.__turnRight()
+                self.__moveForward()
+                self.__drawBox(4, 1, color)
     
-    def drawMap(self):
+    def __drawMap(self):
         # 전체 큰 네모
-        self.moveTurtleTo(-13, 11)
-        self.drawBox(26, 22, "#000000")
+        self.__moveTurtleTo(-13, 11)
+        self.__drawBox(26, 22, "#000000")
 
 
         ## 모서리 다듬기
         
         # 왼쪽 아래
-        self.moveTurtleTo(-13, 5)
-        self.drawBox(7, 16)
+        self.__moveTurtleTo(-13, 5)
+        self.__drawBox(7, 16)
 
         # 오른쪽 아래
-        self.moveTurtleTo(6, -7)
-        self.drawBox(7, 4)
+        self.__moveTurtleTo(6, -7)
+        self.__drawBox(7, 4)
 
         # 홀드
-        self.moveTurtleTo(-12, 10)
-        self.drawBox(6, 4)
+        self.__moveTurtleTo(-12, 10)
+        self.__drawBox(6, 4)
 
         # 필드
-        self.moveTurtleTo(-5, 10)
-        self.drawBox(10, 20)
+        self.__moveTurtleTo(-5, 10)
+        self.__drawBox(10, 20)
 
-    def drawBox(self, width: int, height: int, color: str = "#ffffff"):
+    def __drawBox(self, width: int, height: int, color: str = "#ffffff"):
         self.turtle.setheading(0)
 
         self.turtle.color(color)
@@ -262,15 +270,15 @@ class TetrisGame():
         self.turtle.begin_fill()
 
         for _ in range(2):
-            self.moveForward(width)
-            self.turnRight()
-            self.moveForward(height)
-            self.turnRight()
+            self.__moveForward(width)
+            self.__turnRight()
+            self.__moveForward(height)
+            self.__turnRight()
         
         self.turtle.end_fill()
         self.turtle.penup()
     
-    def drawBlock(self, color: str = "#ffffff"):
+    def __drawBlock(self, color: str = "#ffffff"):
         if color == 0: color = "#ffffff"
 
         self.turtle.setheading(0)
@@ -280,9 +288,9 @@ class TetrisGame():
         self.turtle.pendown()
 
         for _ in range(2):
-            self.moveForward()
-            self.turnRight()         
+            self.__moveForward()
+            self.__turnRight()         
             self.turtle.forward(self.BLOCK_SIZE - 1)
-            self.turnRight()
+            self.__turnRight()
         self.turtle.end_fill()
         self.turtle.penup()
