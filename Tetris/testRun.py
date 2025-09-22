@@ -1,8 +1,13 @@
-from TetrisGame import run
-import turtle
+import TetrisGame
+# import turtle
+import threading
 
-run()
+game = TetrisGame
 
-turtle.mainloop()
+game.run()
 
-# TetrisGame.screen.exitonclick()
+
+
+
+# game.turtle.done()
+game.screen.exitonclick()
