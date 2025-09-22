@@ -1,7 +1,6 @@
 # 기한: 9월 26일 전까지
 
 import Tetromino
-import threading
 import turtle
 import random
 import time
@@ -18,7 +17,7 @@ __FIELD = [
 ]
 __BEFORE_FIELD = __FIELD
 # TIME = cs : 1/100 초
-__FALLING_TIME = 100 / 10
+__FALLING_TIME = 100 / 1
 __isRun = True
 
 screen = turtle.Screen()
@@ -29,41 +28,44 @@ t = turtle.Turtle(shape="turtle")
 t.speed(0) # 이걸로 속도조절
 t.penup()
 
+__tick = 0
+__setBlockCounter = 0
+
 def run():
     global __FIELD
 
-    __drawMap()
-    screen.update()
-    
+    __drawMap()    
     __addNext()
     __setFallingMino()
-
     __drawNext()
     screen.update()
-    
-    # print(FALLING.getType())
-    # printList(FALLING.getFallingMinoField())
-    __drawField()
 
-    tick = 0
-    while __isRun:
-        tick += 1
-        if tick % __FALLING_TIME == 0:
-            result = __FALLING.gravityDrop()
+def update():
+    if not(__isRun): return
 
-            # printList(FALLING.getFallingMinoField())
-            if result == False: # 내리기 실패 -> 바닥 닿음
+
+    global __tick, __FIELD, __setBlockCounter
+
+    __tick += 1
+    # print(__tick)
+    if __tick % __FALLING_TIME == 0:
+        result = __FALLING.gravityDrop()
+
+        # printList(FALLING.getFallingMinoField())
+        if result == False: # 내리기 실패 -> 바닥 닿음
+            __setBlockCounter += 1
+            if __setBlockCounter == 2:
                 __FIELD = __FALLING.getFallingMinoField()
                 __setFallingMino()
                 __drawNext()
-            
-        __drawField()
-        screen.update()
-        time.sleep(0.01)
-    print("END")
+                __setBlockCounter = 0
+    
+    __removeLine()
+    __drawField()
+    screen.update()
 
 def __endGame():
-    global __isRun, __FALLING
+    global __isRun, __FALLING, __HOLD, __NEXT, __BAG, __FIELD, __BEFORE_FIELD
 
     __FALLING = None
     __isRun = False
@@ -74,7 +76,13 @@ def moveRight(): __FALLING.moveRight()
 def turnLeft(): __FALLING.turnLeft()
 def turnRight(): __FALLING.turnRight()
 def turn180(): __FALLING.turn180()
-def hardDrop(): __FALLING.hardDrop()
+def hardDrop():
+    global __FIELD
+
+    __FALLING.hardDrop()
+    __FIELD = __FALLING.getFallingMinoField()
+    __setFallingMino()
+    __drawNext()
 def softDrop(): __FALLING.gravityDrop()
 def hold():
     global __FALLING, __HOLD
@@ -87,6 +95,28 @@ def hold():
         temp = __HOLD
         __HOLD = __FALLING
         __FALLING = Tetromino.Tetromino(temp.getType(), __FIELD)
+    __drawHold()
+
+
+
+# System Functions
+def __printList(lst: list):
+    for a in lst: print(a)
+    print("-------------")
+
+def __removeLine():
+    global __FIELD
+    # __printList(__FIELD)
+    for column in range(20):
+        isFilled = True
+        for row in range(10):
+            if __FIELD[column][row] == 0:
+                isFilled = False
+                break
+        if isFilled:
+            del __FIELD[column]
+            __FIELD.insert(0, [0 for _ in range(10)])
+        # print(isFilled)
 
 def __setFallingMino():
     global __FALLING
@@ -112,10 +142,18 @@ def __addNext():
         if len(__BAG) == 0: __shuffleBag()
         __NEXT.append(__BAG.pop())
 
+
+
 # DRAWING FUNCTIONS
 def __hide():
     t.goto(0, 12 * __BLOCK_SIZE)
     t.color("#ffffff")
+
+def __drawHold():
+    t.goto(__BLOCK_SIZE * -12, __BLOCK_SIZE * 10)
+    __drawBox(6, 4)
+    t.goto(__BLOCK_SIZE * -11, __BLOCK_SIZE * 9)
+    __drawMino(__HOLD)
 
 def __drawField():
     global __BEFORE_FIELD
@@ -145,10 +183,10 @@ def __drawNext():
 
     for nextMinoIndex in range(len(__NEXT)):
         t.goto(__BLOCK_SIZE * 7, __BLOCK_SIZE * (9 - 3 * nextMinoIndex))
-        __drawMinoOfNext(__NEXT[nextMinoIndex])
+        __drawMino(__NEXT[nextMinoIndex])
 
 
-def __drawMinoOfNext(mino: Tetromino.Tetromino):
+def __drawMino(mino: Tetromino.Tetromino):
     # ZSOTJLI
     match(mino.getType()):
         case "Z":

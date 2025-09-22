@@ -1,31 +1,90 @@
+import turtle
 
-def turnRight(array) -> None:
-    result = [[0 for _ in range(len(array))] for _ in range(len(array))]
-    beforeShape = array
-    maxIndex = len(array) - 1
-    for columnIndex in range(len(array)):
-        for rowIndex in range(len(array[0])):
-            result[rowIndex][maxIndex - columnIndex] = beforeShape[columnIndex][rowIndex]
-    
-    return result
+screen = turtle.Screen()
+screen.title("Turtle Car")
+screen.tracer(0)
 
+t = turtle.Turtle("turtle")
+t.penup()
+t.speed(0)
 
-def turnLeft(array) -> None:
-    result = [[0 for _ in range(len(array))] for _ in range(len(array))]
-    beforeShape = array
-    maxIndex = len(array) - 1
-    for columnIndex in range(len(array)):
-        for rowIndex in range(len(array)):
-            result[maxIndex - rowIndex][columnIndex] = beforeShape[columnIndex][rowIndex]
-    return result
+ANGLE = 5 * 0.5
+SPEED = 5 * 0.5
+isPenUp = True
 
+leftTurn = False
+rightTurn = False
+forwardGo = False
+backwardGo = False
 
-def printArray(array):
-    for arr in array: print(arr)
+def leftOn():
+    global leftTurn, rightTurn
+    leftTurn = True
+    rightTurn = False
 
-a = [[1, 2, 3], [4, 5, 6], [7 ,8, 9]]
-printArray(a)
-print()
-printArray(turnRight(a))
-print()
-printArray(turnLeft(a))
+def leftOff():
+    global leftTurn
+    leftTurn = False
+
+def rightOn():
+    global leftTurn, rightTurn
+    leftTurn = False
+    rightTurn = True
+
+def rightOff():
+    global rightTurn
+    rightTurn = False
+
+def goOn():
+    global forwardGo, backwardGo
+    forwardGo = True
+    backwardGo = False
+
+def goOff():
+    global forwardGo
+    forwardGo = False
+
+def backOn():
+    global forwardGo, backwardGo
+    forwardGo = False
+    backwardGo = True
+
+def backOff():
+    global backwardGo
+    backwardGo = False
+
+def penUpDown():
+    global isPenUp
+    if isPenUp:
+        t.pendown()
+    else:
+        t.penup()
+    isPenUp = not isPenUp
+
+screen.listen()
+
+screen.onkeypress(leftOn, "a")
+screen.onkeyrelease(leftOff, "a")
+screen.onkeypress(rightOn, "d")
+screen.onkeyrelease(rightOff, "d")
+screen.onkeypress(goOn, "w")
+screen.onkeyrelease(goOff, "w")
+screen.onkeypress(backOn, "s")
+screen.onkeyrelease(backOff, "s")
+screen.onkeypress(penUpDown, "space")
+
+def update_screen():
+    if forwardGo:
+        t.forward(SPEED)
+    elif backwardGo:
+        t.back(SPEED)
+    if leftTurn:
+        t.left(ANGLE)
+    elif rightTurn:
+        t.right(ANGLE)
+    screen.update()
+    screen.ontimer(update_screen, 10)
+
+update_screen()
+
+screen.mainloop()

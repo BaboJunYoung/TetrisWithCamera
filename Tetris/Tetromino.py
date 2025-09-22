@@ -109,11 +109,6 @@ class Tetromino():
         self.__turnArray180()
         if self.isCrash():
             self.__turnArray180() # 원상복구
-            
-            
-            
-            
-            
             return False
         else: return True
 
@@ -130,19 +125,19 @@ class Tetromino():
         self.position[1] += 1
 
     def __turnArrayRight(self) -> None:
-        beforeShape = self.shape
+        beforeShape = copy.deepcopy(self.shape)
         maxIndex = len(self.shape) - 1
         for columnIndex in range(len(self.shape)):
             for rowIndex in range(len(self.shape[0])):
                 self.shape[rowIndex][maxIndex - columnIndex] = beforeShape[columnIndex][rowIndex]
     def __turnArrayLeft(self) -> None:
-        beforeShape = self.shape
+        beforeShape = copy.deepcopy(self.shape)
         maxIndex = len(self.shape) - 1
         for columnIndex in range(len(self.shape)):
             for rowIndex in range(len(self.shape[0])):
                 self.shape[maxIndex - rowIndex][columnIndex] = beforeShape[columnIndex][rowIndex]
     def __turnArray180(self) -> None:
-        beforeShape = self.shape
+        beforeShape = copy.deepcopy(self.shape)
         maxIndex = len(self.shape) - 1
         for columnIndex in range(len(self.shape)):
             for rowIndex in range(len(self.shape[0])):
