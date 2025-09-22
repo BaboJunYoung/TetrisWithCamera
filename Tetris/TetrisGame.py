@@ -4,14 +4,17 @@ import turtle, random, copy
 class TetrisGame():
     def __init__(self, fallingTimeScale: float = 1) -> None:
         self.BLOCK_SIZE = 50
-        self.FALLING_TIME = 100 / fallingTimeScale
-        self.SETTING_TIME = 2
         self.MINO_TYPES = list("ZSOTJLI")
+
+        self.FALLING_TIME = 1000 / fallingTimeScale
+        self.SETTING_TIME = 3
+
 
         self.nextMinos: list[Tetromino] = []
         self.bagOfNext: list[Tetromino] = []
         self.holdingMino: Tetromino = None
         self.fallingMino: Tetromino = None
+
 
         self.field: list[list[int | str]] = [
             [0 for _ in range(10)] for _ in range(20)
@@ -59,9 +62,9 @@ class TetrisGame():
         if self.tick % self.FALLING_TIME == 0:
             fallingResult = self.fallingMino.softDrop()
 
-            if fallingResult == False:
+            if fallingResult == False: # 블럭 자동설치
                 self.settingBlockTimer += 1
-                if self.settingBlockTimer == self.SETTING_TIME:
+                if self.settingBlockTimer >= self.SETTING_TIME:
                     self.field = self.fallingMino.getFallingMinoField()
                     self.__setFallingMino()
                     self.__drawNext()
@@ -141,12 +144,15 @@ class TetrisGame():
                 del self.field[column] # 꽉 찬 줄 제거
                 self.field.insert(0, [0 for _ in range(10)]) # 맨 위에 새로운 줄 추가
     
+    def __endGame(self):
+        self.isRun = False
+
     def __setFallingMino(self):
         self.fallingMino = Tetromino(self.nextMinos.pop(0).getType(), self.field)
         self.__fillNext()
 
         if self.fallingMino.isCrash(): # 소환했는데 충돌이 남. -> 위까지 넘침
-            self.endGame()
+            self.__endGame()
     
     def __fillBag(self):
         for minoType in self.MINO_TYPES:
