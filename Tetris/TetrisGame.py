@@ -31,7 +31,7 @@ class TetrisGame():
             height=self.BLOCK_SIZE * 23
         )
         self.screen.tracer(0)
-        self.turtle = turtle.Turtle(shape="turtle")
+        self.turtle = turtle.Turtle(shape="turtle", visible=False)
         self.turtle.speed(0)
         self.turtle.penup()
 
@@ -232,7 +232,7 @@ class TetrisGame():
                 self.__drawBox(2, 2, color)
             case "T":
                 self.__moveForward()
-                self.__drawBlock(color)
+                self.__drawBox(1, 1, color)
                 self.__moveBackward()
                 self.__turnRight()
                 self.__moveForward()
@@ -289,6 +289,8 @@ class TetrisGame():
         
         self.turtle.end_fill()
         self.turtle.penup()
+
+        # self.screen.update()
     
     def __drawBlock(self, color: str = "#ffffff"):
         if color == 0: color = "#ffffff"
@@ -306,3 +308,5 @@ class TetrisGame():
             self.__turnRight()
         self.turtle.end_fill()
         self.turtle.penup()
+
+        self.screen.update()
