@@ -3,7 +3,7 @@ import turtle, random, copy
 
 class TetrisGame():
     def __init__(self, fallingTimeScale: float = 1) -> None:
-        self.BLOCK_SIZE = 50
+        self.BLOCK_SIZE = 35
         self.MINO_TYPES = list("ZSOTJLI")
 
         self.FALLING_TIME = 1000 / fallingTimeScale
